@@ -1,25 +1,27 @@
+// pages/api/immersion.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { query } = req.query;
+  const { word } = req.query;
 
-  if (!process.env.IMMERSIONKIT_KEY) {
-    return res.status(500).json({ error: "Missing IMMERSIONKIT_KEY" });
+  if (!word) {
+    return res.status(400).json({ error: "Missing word query" });
   }
 
   try {
-    const response = await fetch("https://api.immersionkit.com/look_up_dictionary", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.IMMERSIONKIT_KEY}`
-      },
-      body: JSON.stringify({ query })
-    });
+    const response = await fetch(
+      `https://www.immersionkit.com/api/v1/lookup?keyword=${encodeURIComponent(
+        word as string
+      )}`
+    );
+
+    if (!response.ok) {
+      throw new Error("ImmersionKit API error");
+    }
 
     const data = await response.json();
     res.status(200).json(data);
-  } catch (e) {
-    res.status(500).json({ error: "API error", details: e });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 }
